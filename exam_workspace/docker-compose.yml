@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: exam_2400032515
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Root@1234
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d exam_2400032515"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: tammanajoshit/exam-crud-backend:latest
+    build:
+      context: ./backend/CrudService
+      dockerfile: ../Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/exam_2400032515
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Root@1234
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8085:8081"
+
+  frontend:
+    image: tammanajoshit/exam-crud-frontend:latest
+    build:
+      context: ./frontend
+    environment:
+      BACKEND_URL: http://backend:8081
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  pgdata:
